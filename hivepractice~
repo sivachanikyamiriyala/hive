@@ -1,0 +1,580 @@
+----IMPORTANT POINTS ---------------
+Hive is a datawarehouse 
+Hive data is totally denormalized 
+HIve is only used for analytical purpose hive is not used for transactional purpose 
+Hive always needs metastoredb like derby 
+HQL queries are almost silimar to SQL 
+
+HIve data models 
+-------------
+1.Tables 
+2.Partitions 
+3.Bucketization 
+
+Hive Datatypes 
+--------------
+1.primitive
+a.numeric : tiny int ,small int,int,big int,double,float
+b.string :string,char,varchar
+c.misc: boolean ,binary 
+d.date:date timestamp
+
+2.complex 
+a.array<data-type>
+b.map<primitive,data_type> 
+c.struct<col:datatype,comment ' ', , ,> 
+d.uniontype<data_type> 
+
+---Hive Functions
+-------------- 
+1.UDF (split,substr,length)
+2.UDAF (min,max,sum,count) 
+3.UDTF (explode) 
+
+
+SERDE :
+--------
+methods: 
+1.initialise
+2.serialize 
+3.deseralize 
+
+serde: operations: 
+table ceation time initialising the validate the schema of the table it is done by serde
+at the time of inserting or loading the data into table data will be serialized 
+when we are executing any query data will be desearized 
+
+THere is not concept of primary and foreign key concept in hive 
+
+Default values 
+--------------
+1.by default fields terminated by ctrl+A
+2.collection items terminated by ctrl+B
+3.map keys terminated by ctrl+c
+4.lines terminated by '\n' 
+5.by default metastore db is 'derby' 
+6.by default database name is 'default'
+7.by default storage option is textfile 
+
+----HIVE prerequisities 
+------------------------
+
+HIve is one of the hadoop eco systemm tool it is runnin on top of hadoop facebook introduced this 
+earlier for data processing we require MR for MR large number of lines of java code required 
+to avoid that we use HQL which is similar to SQL 
+
+---INSTALATION 
+-----------------
+
+local/internal(dev) 
+remote/external(prod) 
+
+in local mode only one session 
+in remote mode multiple sessions
+one session is independent of another 
+if we want to update any update in hive-site.xml 
+
+please refer diagram 
+
+
+HOw to create a database in hive
+------------------------------
+
+create database if not exists kalyan
+comment 'databse name is kalyan' 
+location '/hive/kalyan'
+with dbproperties('key1'='value1') 
+
+HOw to use the database :
+-------------------------
+
+use kalyan 
+
+How to describe database:
+-------------
+describe database kalyan
+describe database extended kalyan 
+
+How to describe function:
+------------------------
+describe function split 
+
+describe function extended split 
+
+sow functions 
+show databases 
+
+how to describe tables : 
+-------------------
+describe tablename 
+describe formatted student1 ;
+describe extended student1 ;
+
+How to drop a databse in hive: 
+--------------------------------
+
+drop database if exists kalyan
+drop database if exists kalyan cascade 
+drop database if exists kalyan restrict 
+ 
+HOw to alter database : 
+----------------
+alter database kalyan set dbproperties('transactional'='true')
+
+alter database kalyan set owner user hadoop
+
+alter database kalyan set owner role hadoop 
+
+
+creation of tables 
+Tables are of three types 
+1.Managed table
+2.External table 
+3.Temporary table(Managed table ) 
+
+when we are using insert ,load ,select operation we can't see any difference 
+when we are droping a external table  the data will be lost in rdbms but data will present in hdfs 
+when we are droping a managed table  the data will be lost in rdbms and in hdfs 
+
+temporary table is a session base table it will not reflect in rdbms and in hdfs it will reflect only in hive 
+
+create table if not exists student1(`employee name` string,id int,course string,year int) 
+row format delimited 
+fields terminated by '\t'
+lines terminated by '\n'
+stored as textfile 
+;
+
+create table if not exists student2(name string,id int,course string,year int) 
+row format delimited 
+fields terminated by '\t'
+lines terminated by '\n'
+stored as textfile 
+;
+
+create external table if not exists student3(name string,id int,course string,year int) 
+row format delimited 
+fields terminated by '\t'
+lines terminated by '\n'
+stored as textfile 
+;
+
+create temporary table if not exists student4(name string,id int,course string,year int) 
+row format delimited 
+fields terminated by '\t'
+lines terminated by '\n'
+stored as textfile 
+;
+
+load data local inpath '/home/siva/work/hive_inputs/student.txt' overwrite into table student1 ;
+
+load data local inpath '/home/siva/work/hive_inputs/student.txt' overwrite into table student2 ;
+
+load data local inpath '/home/siva/work/hive_inputs/student.txt' overwrite into table student2 ;
+
+dfs -mkdir -p /home/siva/work/hive_inputs/
+
+dfs -put /home/siva/work/hive_inputs/student.txt /home/siva/work/hive_inputs/
+
+load data inpath '/home/siva/work/hive_inputs/student.txt' overwrite into table student2 ;
+
+dfs -put /home/siva/work/hive_inputs/student.txt /home/siva/work/hive_inputs/
+
+load data inpath '/home/siva/work/hive_inputs/student.txt' into table student2 ;
+
+---------External table usage 
+
+dfs -mkdir -p /hive/externaldata 
+
+dfs -put /home/siva/work/hive_inputs/student.txt /hive/externaldata 
+
+create external table if not exists studenttext1(name string,id int,course string,year int)
+comment 'table name is studenttext1' 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+location '/hive/kalyan/studenttext1'
+
+select * from studenttext1 ;
+ 
+describe formatted studenttext1 ;
+
+
+create table if not exists studenttext2(name string,id int,course string,year int)
+comment 'table name is studenttext2' 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+location '/hive/externaldata' 
+;
+
+select * from studenttext2 ;
+describe formatted studenttext2 ;
+
+create table if not exists student
+(name string comment 'student name',
+id int comment 'student id',
+course string comment 'student course',
+year int comment 'student year')
+comment 'student is the table name' 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+location '/hive/kalyan/student'
+tblproperties('key1'='value1') 
+;
+dfs -put /home/siva/work/hive_inputs/student.txt /hive/kalyan/
+
+   or
+
+load data local inpath '/home/siva/work/hive_inputs/student.txt'  overwrite into table student ;
+
+select * from student ; 
+
+create table if not exists studentdata 
+(name string comment 'name of the student',
+subjects array<string> comment 'student subjects',
+marks map<string,int> comment 'student marks',
+address struct<loc:string comment 'student location',pincode:int comment 'student pide',city:string comment 'student city'> comment 'st add',
+details uniontype<double,int,array<string>,struct<a:int,b:string>,boolean> comment 'student details'
+) 
+comment 'table name is studentdata1'
+row format delimited 
+fields terminated by '#' 
+collection items terminated by ','
+map keys terminated by ':' 
+lines terminated by '\n' 
+stored as textfile 
+location '/hive/kalyan/studentdata' 
+tblproperties('key1'='value1') 
+
+
+load data local inpath '/home/siva/work/hive_inputs/studentdata.txt' overwrite into table studentdata ;
+
+select * from studentdata ;
+
+select name,subjects[0],marks['math'],address.pincode,details from studentdata ;
+
+insert overwrite local directory '/home/siva/dir1' select * from studentdata ;
+
+insert overwrite local directory '/home/siva/dir2' select name,subjects[0],marks['math'],address.pincode,details from studentdata ;
+
+insert overwrite local directory '/home/siva/dir3' fields terminated by '#' collection items terminated by ',' map keys terminated by ':' lines terminated by '\n' 
+select * from studentdata ;
+
+-----Partitoning main purpose is To improve the performance
+  1.static partitioning 
+  2.Dynamic partitioning  
+
+
+
+1.At the time of table creation time there is no concept of static or dynamic partition it is only a partition table 
+
+2.when loading.inserting the data into table we use partions 
+ using static approach is called static partitioning 
+ using dynamic approach is called dynamic partitioning 
+
+  In Dynamic partition we have two types 
+   1.strict mode (default) 
+   2.nonstrict mode 
+if we know all the partition column go for static parttion 
+if we don't know all the partition columns go for dynamic partitiion 
+
+use load statement all partition columns are static data showuld always from file only 
+use insert statemenet no condition on the partition column but the data should be from table only 
+
+
+order of partition columns 
+
+ all static allowed (s1,,s2,s3,s4,s5) 
+ all dynamic allowed (d1,d2,d3,d4,d5,d6) 
+ static and dynamic allowed (s1,s2,s3,d1,d2,d3) 
+ the parent of static partiton should not be dynamic 
+ order of partition columns should be important 
+ partition will be at folder level 
+
+if a table is partitioned on top of that we can create bucketing 
+ because partitioning is done on folderlevel 
+
+if table is bucketized on top that we can't create partitions 
+ because bucketing is at file level 
+
+
+create table if not exists student_partition (`student name` string,id int) 
+partitioned by (course string,year int) 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+; 
+
+
+#load the data into student_partition using static approach 
+load data local inpath '/home/siva/work/hive_inputs/student_cse_1.txt' overwrite into table student_partition partition(course='cse',year=1);
+ 
+load data local inpath '/home/siva/work/hive_inputs/student_cse_2.txt' overwrite into table student_partition partition(course='cse',year=2);
+
+
+#insert the data into student_partition using dynamic approach 
+
+insert into table student_partition partition(course,year) select * from student ;
+
+insert into table student_partition partition(course='cse',year) select name,id,year from student where course='cse' ;
+
+insert into table student_partition partition(course='cse',year=1) select id,name from student where course='mech' and year=2;
+
+insert into table student_partition partition(course='ece',year=1) select id,name from student where course='cse' and year=2;
+
+# order of partition columns are very important 
+# partition columns are fixed 
+# partition columns can't be changed later 
+# partitining used for static and dynamic data 
+
+----------Bucketization
+
+set hive.cli.print.current.db=true 
+set hive.cli.print.header=true 
+set hive.exec.dynamo.partition.mode=true 
+set hive.enforce.bucketing=true 
+
+bucketing main purpose is sampling and partitioning the data 
+
+create table if not exists users(name string,id int );
+
+load data local inpath '/home/siva/work/hive_inputs/users.txt' overwrite into table users ;
+
+create table if not exists users1(name string,id int)
+clustered by (id) into 4 buckets ;
+
+insert overwrite table users1 select * from users ;
+
+create table if not exists users2(name string,id int) 
+clustered by (id) sorted by (id desc) into 5 buckets ;
+
+insert overwrite table users2 select * from users ;
+
+select * from users1 tablesample (bucket 1 out 4 on (id) ) ;
+
+select * from users2 tablesample(bucket 2 out of 5 on (id)) ;
+
+select * from users2 tablesample(bucket 2 out of 5 on rand()) ;
+
+
+#number of buckets are fixed 
+#we can't change the bucket number later 
+#bucketing is at file level 
+#bucketing is used only for static data 
+
+
+----------------JOINS
+#by default is reduce side join 
+
+join means inner join
+left outer join 
+right outer join
+full outer join
+
+left semi join is supported in hive to reduce the duplicates 
+  in a bank many customers are there i want the info that alteast one transaction done by customer 
+
+Reduce side join is used for aggregation oerations 
+mapper is used for parallel processing 
+
+create table if not exists products(name string,id int, , ,) ;
+
+create table if not exists sales(name string,id int, , ,) ;
+
+load data local inpath '/home/siva/work/hive_inputs/products.txt' overwrite into table products ;
+
+load data local inpath '/home/siva/work/hive_inputs/sales.txt' overwrite into table 'sales' ;
+
+
+select products.*,sales.* from products join sales on products.name=sales.name ;
+
+select products.*,sales.* from products left outer join sales on products.name=sales.name ;
+
+select products.*,sales.* from products right outer join sales on products.name=sales.name ;
+
+select products.*,sales.* from products full outer join sales on products.name=sales.name ;
+
+
+------MAP join
+
+select /* +mapjoin(sales) */ products.*,sales* from products join sales on products.name=sales.name ;
+
+select /* +mapjoin(products) */ products.*,sales* from products join sales on products.name=sales.name ;
+
+select /* +mapjoin(sales) */ products.*,sales.* from products left outer join sales on products.name =sales.name ;
+
+select /* +mapjoin(products) */ products.*,sales.* from products right outer join sales on products.name =sales.name ; 
+
+
+when using map side join full outer join is not allowed 
+ and if we want to do left outer join then use right side table 
+     if we want to do right outer join then use left side table 
+  for inner join we can use any table 
+
+storage options 
+-------------------
+textfile 
+sequencefile 
+avro
+rcfile
+orc
+parquet 
+
+for parquet optimization are best 
+ retrival time is very fast comapred to all the storage options 
+ it is best to go parquet if the daa is colum oriented 
+ if the data is row oriented go for avro 
+ extra one advance in using orc it supports transactional  
+
+
+create table if not exists student_textfile(name string,id int,course string,year int)
+stored as textfile ;
+ 
+create table if not exists student_sequencefile(name string,id int,course string,year int)
+stored as sequencefile ;
+
+create table if not exists student_avro(name string,id int,course string,year int)
+stored as avro ;
+
+create table if not exists student_rcfile(name string,id int,course string,year int) 
+stored as rcfile ;
+
+create table if not exists student_orc(name string,id int,course string,year int) 
+stored as orc ;
+
+create table if not exists student_parquet(name string,id int,course string,year int) 
+stored as parquet ;
+
+insert into table student_textfile select * from student ;
+
+
+insert into table student_sequencefile select * from student ;
+
+insert into table student_avro select * from student ;
+
+insert into table student_rcfile select * from student ;
+
+insert into table student_orc select * from student ;
+
+insert into table student_parquet select * from student ;
+
+   SERDE:
+-------------
+serealize and deserialise the data 
+
+methods : 
+-----
+initialise(): initializing the job resiurces 
+serialize(): serializing the data 
+deserialize(): deserialing the data 
+
+operations:
+-----------
+when table creation table serde will initialise and validate the schema 
+when inserting the data into table data will be serialised 
+when doing query operation data will be deserialised 
+
+
+create table if not exists student_serde_old(name string,id string,course string,year string) 
+comment 'table student-serde-old'
+row format serde 'org.apache.hadoop.hive.contrib.serde2.RegexSerDe' 
+with serdeproperties("input.regex"="([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)")
+;
+
+create table if not exists student_serde_new(name string,id int,course string,year int) 
+comment 'table student-serde-new'
+row format serde 'org.apache.hadoop.hive.serde2.RegexSerDe' 
+with serdeproperties("input.regex"="([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)")
+;
+
+in serde default serde is lazy simple serde 
+default input format is textinput format 
+default output format is hiveignorekey textoutput format 
+
+when using old serde it accepts only string as a datatype 
+when using new serde it accepts only primitive datatype 
+
+
+---------ACID PROPERTIES 
+
+automicity: when doing any operation the transaction should be true or false but in middle 
+consistancy: when we done any transaction the result should be visible to all 
+isolation: when one user is done one  transaction that should not effect the other user 
+durability:the result should be present even after the failure of system also 
+
+In hive only appends no updates if we want to do updates 
+the table must and should be bucketised 
+the table should be stored as orc 
+and in table properties transactional = true 
+
+create table if not exists student_acid(name string,id int,course string,year int) 
+clustered by (name) into 4 buckets 
+stored as parquet 
+tblproperties('transactional'='true') 
+;
+
+load data local inpath '/home/siva/work/hive_inputs/student.txt' overwrite into table student_acid ;
+
+update student set name='siva' where id=2 ;
+
+insert into table student_acid values ('ram',11,'ece',2019);
+
+
+-------------------FUNCTIONS----------------->>>>>
+
+
+1.UDF (user defined users) length,substr,split
+2.UDAF (user defined aggressive functions) count,min,max,sum
+3.UDTF (user defined table creation function ) explode
+
+vi file9
+i am going 
+to hyd
+i am learnig 
+hadoop course 
+:wq
+
+create table if not exists docs(line string) ;
+
+load data local inpath '/home/siva/file9' overwrite into table docs ;
+
+
+select * from docs ;
+
+create table if not exists words as select explode(split(line,' ')) as word from docs ; 
+
+select word,count(1) from words group by word order by word desc ;
+
+split function description: spit the string based on regex 
+explode: converting the elements of array into no of rows and elements of map key are converted into number of rows and columns 
+count(*): counting all the number of rows 
+count(expr) : counting all the rows except nulls 
+count(distict expr) :counting all the unique rows except nulls   
+
+
+for example if the data is 
+abc:123@shyam 
+def:124@ram
+ghi:125@ramesh 
+
+step1:create table if not exists docs(name string) 
+step2:load data local inpath '/home/siva/filename' overwrite into table docs ; 
+
+step3:create table if not exists table1(name string,id int) ;
+
+step4:insert into table table1 select substr(name,1,3),substr(name,5,3) from docs ;
+
+
+or after step2: 
+
+create table if not exists table5 as select substr(nam
+
+
+   
+
