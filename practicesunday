@@ -1,0 +1,263 @@
+create database if not exists kalyan 
+comment 'db name is kalyan' 
+location '/hive/kalyan' 
+with dbproperties('key1'='value1') 
+;
+
+use kalyan ;
+
+create table if not exists student1(name string,id int,course string,year int) 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+;
+
+create table if not exists student2(name string,id int,course string,year int) 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+;
+
+create external table if not exists student3(name string,id int,course string,year int) 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+;
+
+create temporary table if not exists student4(name string,id int,course string,year int) 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+;
+
+create external table if not exists studenttext1(name string,id int,course string,year int)
+comment 'table name is studenttext1' 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+;
+
+
+create external table if not exists studenttext2(name string,id int,course string,year int)
+comment 'table name is studenttext2' 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+location '/hive/externaldata'
+;
+
+create external table if not exists student(name string,id int,course string,year int)
+comment 'table name is student' 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+location '/hive/kalyan/student'
+;
+
+
+create table if not exists student6
+(name string comment 'student name',
+id int comment 'student id',
+course string comment 'student course',
+year int comment 'student year'
+)
+comment 'student6 is the table name' 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+location '/hive/kalyan/student6' 
+
+;
+
+create table if not exists studentdata 
+(name string comment 'student name',
+subjects array<string> comment 'student subjects',
+marks map<string,int> comment 'student marks',
+address struct<loc:string comment 'student lo',pincode:int comment 'student pincode',city:string comment 'studentcity'> comment 'st add',
+details uniontype<decimal,int,array<string>,struct<a:int,b:string>,boolean> comment 'student details'
+)
+comment 'studentdata is the table name' 
+row format delimited 
+fields terminated by '#'
+collection items terminated by ',' 
+map keys terminated by ':'
+lines terminated by '\n' 
+stored as textfile 
+location '/hive/kalyan/studentdata' 
+;
+
+
+create table if not exists student_partition(name string,id int)
+partitioned by (course string,year int) 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile ;
+
+
+
+
+
+create table if not exists products(name string,id int,price int) 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile ;
+
+create table if not exists sales(name string,year int,percentage double) 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile ;
+
+load data local inpath '/home/siva/work/hive_inputs/products.txt' overwrite into table products ;
+
+load data local inpath '/home/siva/work/hive_inputs/sales.txt' overwrite into table sales ;
+
+
+
+
+create table if not exists student_textfile(name string,id int,course string,year int) 
+stored as textfile ;
+
+create table if not exists student_sequencefile(name string,id int,course string,year int) 
+stored as sequencefile ;
+
+create table if not exists student_avrofile(name string,id int,course string,year int) 
+stored as avro ;
+
+create table if not exists student_rcfile(name string,id int,course string,year int) 
+stored as rcfile ;
+
+create table if not exists student_orcfile(name string,id int,course string,year int) 
+stored as orc ;
+
+create table if not exists student_parquetfile(name string,id int,course string,year int) 
+stored as parquet ;
+
+
+
+insert overwrite into table student_textfile select * from student ;
+
+insert overwrite  table student_sequencefile select * from student ;
+
+insert overwrite  table student_avrofile select * from student ;
+
+insert overwrite  table student_rcfile select * from student ;
+
+insert overwrite  table student_orcfile select * from student ;
+
+insert overwrite  table student_parquetfile select * from student ;
+
+
+create table if not exists student_acid(name string,id int,course string,year int) 
+clustered by (name) into 4 buckets 
+stored as orc 
+tblproperties('transactional'='true') ;
+
+insert overwrite table student_acid select * from student ;
+
+
+
+
+create table if not exists student_old_regex(name string,id string,course string,year string) 
+row format serde "org.apache.hadoop.hive.contrib.serde2.RegexSerDe" 
+with serdeproperties("input.regex"="([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)") ;
+
+
+
+
+create table if not exists student_new_regex(name string,id string,course string,year string) 
+row format serde "org.apache.hadoop.hive.serde2.RegexSerDe" 
+with serdeproperties("input.regex"="([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)") ;
+
+
+create table if not exists docs(line string);
+
+load data local inpath '/home/siva/work/hive_inputs/demoinput' overwrite into table docs ;
+
+select * from docs ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,296 @@
+create database if not exists kalyan
+comment 'database name is kalyan' 
+location '/hive/kalyan' 
+with dbproperties('key1'='value') 
+;
+
+use kalyan ;
+
+describe database extended kalyan ;
+
+create table if not exists student1(name string,id int,course string,year int)
+comment 'student1 is the table name'
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile ;
+
+create table if not exists student2(name string,id int,course string,year int)
+comment 'student2 is the table name'
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile ;
+
+create external table if not exists student3(name string,id int,course string,year int)
+comment 'student3 is the table name'
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile ;
+
+create temporary table if not exists student4(name string,id int,course string,year int)
+comment 'student4 is the table name'
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile ;
+
+
+load data local inpath '/home/siva/work/hive_inputs/student.txt' overwrite into table student1 ;
+
+
+load data local inpath '/home/siva/work/hive_inputs/student.txt' overwrite into table student2 ;
+
+load data local inpath '/home/siva/work/hive_inputs/student.txt' overwrite into table student2 ;
+
+dfs -mkdir -p /home/siva/work/hive_inputs/ ;
+
+dfs -put /home/siva/work/hive_inputs/student.txt /home/siva/work/hive_inputs/ ;
+
+load data inpath '/home/siva/work/hive_inputs/student.txt' overwrite into table student3 ;
+
+
+dfs -put /home/siva/work/hive_inputs/student.txt /home/siva/work/hive_inputs/ ;
+
+load data inpath '/home/siva/work/hive_inputs/student.txt' into table student3 ;
+
+select * from student1 ;
+select * from student2 ;
+
+select * from student3 ;
+
+select * from student4 ;
+describe student4 ;
+describe formatted student3 ;
+
+dfs -mkdir -p /hive/externaldata ;
+
+dfs -put /home/siva/work/hive_inputs/student.txt /hive/externaldata ;
+
+dfs -cat /hive/externaldata/student.txt  ;
+
+
+create external table if not exists studenttext1(name string,id int,course string,year int) 
+comment 'table name is studenttext1' 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+;
+
+select * from studenttext1 ;
+
+
+create external table if not exists studenttext2(name string,id int,course string,year int) 
+comment 'table name is studenttext1' 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+location '/hive/externaldata'
+;
+
+select * from student2 ;
+
+create table if not exists student
+(name string comment 'student name',
+id int comment 'student id',
+course string comment 'student course',
+year int comment 'student year'
+)
+comment 'student is the table name '
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+location '/hive/kalyan/student' 
+;
+load data local inpath '/hive/siva/work/hive_inputs/student.txt' overwrite into table student ;
+
+create table if not exists studentdata
+(name string comment 'student name',
+subjects array<string> comment 'student subjects',
+marks map<string,int> comment 'student marks',
+address struct<loc:string comment 'student loc',pincode:int comment 'student pincode',city:string comment 'student city'> comment'stu add',
+details uniontype<double,int,array<string>,struct<a:int,b:string>,boolean> comment 'student details'
+)
+comment 'studentdata is the table name' 
+row format delimited 
+fields terminated by '#' 
+collection items terminated by ','
+map keys terminated by ':'
+lines terminated by '\n' 
+stored as textfile 
+location '/hive/kalyan/studentdata' 
+;
+
+load data local inpath '/home/siva/work/hive_inputs/studentdata.txt' overwrite into table studentdata ;
+
+select * from studentdata ;
+
+select name,subjects[0],marks['math'],address.city,details from studentdata ;
+
+insert overwrite local directory '/home/siva/tuesday_1' select * from studentdata ;
+
+insert overwrite local directory '/home/siva/tuesday_2' row format delimited fields terminated by '\t' collection items terminated by ',' map keys terminated by ':' lines terminated by '\n' select * from studentdata ;
+
+
+create table if not exists student_partition(name string,id int)
+partitioned by (course string,year int) 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+;
+
+load data local inpath '/home/siva/work/hive_inputs/student_cse_1.txt' overwrite into table student_partition partition(course='cse',year=1) ;
+
+
+load data local inpath '/home/siva/work/hive_inputs/student_cse_2.txt' overwrite into table student_partition partition(course='cse',year=2) ;
+
+insert into table student_partition partition(course='mca',year) select name,id,year from student where course='cse' ;
+
+insert into table student_partition partition(course='mba',year=1) select name,id from student where course='cse' and year=1 ;
+
+insert into table student_partition partition(course,year) select * from student ;
+
+create table if not exists users(name string,id int) 
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+;
+
+load data local inpath '/home/siva/work/hive_inputs/users.txt' overwrite into table users ;
+
+create table users1(name string,id int) clustered by (id) into 4 buckets ;
+
+insert into table users1 select * from users;
+
+create table if not exists users2(name string,id int) clustered by (id) sorted by (id desc) into 5 buckets ;
+
+insert into table users2 select * from users ;
+
+
+select * from users;
+select * from users1 ;
+select * from users2 ;
+select * from users1 tablesample(bucket 1 out of 4 on (id)) ;
+
+select * from users2 tablesample(bucket 1 out of 5 on rand());
+select * from users2 tablesample(bucket 1 out of 5 on (id)) ;
+
+create table if not exists products(name string,id int,price int)
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+;
+load data local inpath '/home/siva/work/hive_inputs/products.txt' overwrite into table products ;
+
+
+create table if not exists sales(name string,year int,percentage double)
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+;
+load data local inpath '/home/siva/work/hive_inputs/sales.txt' overwrite into table sales ;
+
+select p.*,s.* from products p join sales s on p.name=s.name ;
+
+select p.*,s.* from products p left outer join sales s on p.name=s.name ;
+
+select p.*,s.* from products p right outer join sales s on p.name=s.name ;
+
+select p.*,s.* from products p full outer join sales s on p.name=s.name ;
+
+select /* +mapjoin(sales)*/ products.*,sales.* from products join sales on products.name=sales.name ;
+
+select /* +mapjoin(products)*/ products.*,sales.* from products join sales on products.name=sales.name ;
+
+select /* +mapjoin(sales)*/ products.*,sales.* from products left outer join sales on products.name=sales.name ;
+
+select /* +mapjoin(products)*/ products.*,sales.* from products right outer join sales on products.name=sales.name ;
+
+create table if not exists student_textfile(name string,id int,course string,year int) 
+stored as textfile ;
+
+create table if not exists student_sequencefile(name string,id int,course string,year int) 
+stored as sequencefile ;
+
+create table if not exists student_avro(name string,id int,course string,year int) 
+stored as avro ;
+
+create table if not exists student_rcfile(name string,id int,course string,year int) 
+stored as rcfile ;
+
+create table if not exists student_orc(name string,id int,course string,year int) 
+stored as orc ;
+
+create table if not exists student_parquet(name string,id int,course string,year int) 
+stored as parquet ;
+
+insert into table student_textfile select * from student ;
+
+insert into table student_sequencefile select * from student ;
+
+insert into table student_avro select * from student ;
+
+insert into table student_rcfile select * from student ;
+
+insert into table student_orc select * from student ;
+
+insert into table student_parquet select * from student ;
+
+create table if not exists student_acid(name string,id int,course string,year int)
+comment 'student-acid is the table name'
+clustered by (name) into 4 buckets 
+stored as orc
+tblproperties('transactional'='true') 
+;
+
+insert into table student_acid select * from student ;
+
+update student_acid set year=3,course='mech' where id=4;
+
+delete from student_acid where name='ani';
+
+note:we can't update the bucketed column ;
+
+create table if not exists student_old(name string,id string,course string,year string) 
+row format serde 'org.apache.hadoop.hive.contrib.serde2.RegexSerDe'
+with serdeproperties("input.regex"="([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)");
+
+load data local inpath '/home/siva/work/hive_inputs/student.txt' overwrite into table student_old ;
+
+
+
+create table if not exists student_new(name string,id int,course string,year int) 
+row format serde 'org.apache.hadoop.hive.serde2.RegexSerDe'
+with serdeproperties("input.regex"="([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)");
+
+load data local inpath '/home/siva/work/hive_inputs/student.txt' overwrite into table student_new ;
+
+
+
+create table if not exists docs(line string)
+comment 'docs is the table name'
+row format delimited 
+fields terminated by '\t' 
+lines terminated by '\n' 
+stored as textfile 
+location '/hive/kalyan/docs' 
+;
+
+load data local inpath '/home/siva/work/hive_inputs/demoinput' overwrite into table docs ;
+
+select * from docs ;
+
+
+
+select explode(split(line,' ')) as word from docs ;
+
+create table if not exists words as select explode(split(line,' ')) as word from docs ;
+
